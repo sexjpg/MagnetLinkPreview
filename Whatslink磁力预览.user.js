@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Whatslink磁力预览
 // @namespace    http://whatslink.info/
-// @version      2.8.1
+// @version      2.8.2
 // @description  在磁力链接后添加标识符号，通过点击或悬停显示完整链接信息,如果选中的文本中包含磁力链接或磁力链接特征码,在附近添加悬浮标志,悬停预览链接内容
 // @author       sexjpg
 // @grant        GM_xmlhttpRequest
@@ -9,9 +9,7 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @connect      whatslink.info
-
 // @match        *://*.*/*
-
 
 // @noframes
 // @run-at       document-end
@@ -191,7 +189,8 @@
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: `https://whatslink.info/api/v1/link?url=${magnetLink}`,
-                headers: { 'Content-Type': "text/plain", },
+                headers: { 'Content-Type': "text/plain", 
+                            'referer':'https://whatslink.info/'},
                 onload: function (response) {
                     try {
                         const data = JSON.parse(response.responseText);
