@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Whatslink磁力预览
 // @namespace    http://whatslink.info/
-// @version      2.8.2
+// @version      2.9.1
 // @description  在磁力链接后添加标识符号，通过点击或悬停显示完整链接信息,如果选中的文本中包含磁力链接或磁力链接特征码,在附近添加悬浮标志,悬停预览链接内容
 // @author       sexjpg
 // @grant        GM_xmlhttpRequest
@@ -9,7 +9,8 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @connect      whatslink.info
-// @match        *://*.*/*
+// @require      https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js
+// @match        *://*/*
 
 // @noframes
 // @run-at       document-end
@@ -250,22 +251,19 @@
             <div style="margin-bottom: 10px;">
                 <strong style="font-size: 16px; word-break: break-word;">${data.name || '未知名称'}</strong>
             </div>
-            
+            <div id="magnet-qrcode" style="text-align: center; margin-top: 10px;"></div>
             <div style="margin-bottom: 8px;">
                 <span>类型：</span>
                 <span style="color: #17a2b8;">${data.type || '未知类型'}</span>
             </div>
-            
             <div style="margin-bottom: 8px;">
                 <span>文件类型：</span>
                 <span style="color: #ffc107;">${data.file_type || '未知文件类型'}</span>
             </div>
-            
             <div style="margin-bottom: 8px;">
                 <span>大小：</span>
                 <span style="color: #28a745;">${formatFileSize(data.size) || '未知大小'}</span>
             </div>
-            
             <div style="margin-bottom: 8px;">
                 <span>文件数：</span>
                 <span style="color: #dc3545;">${data.count || 0}</span>
@@ -285,6 +283,8 @@
             html += `</div>`;
         }
 
+        // html += `<div id="magnet-qrcode" style="text-align: center; margin-top: 10px;"></div>`;
+
         return html;
     }
 
@@ -298,6 +298,24 @@
         const i = Math.floor(Math.log(bytes) / Math.log(k));
 
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // 新增：生成二维码函数
+    function generateQrCode(magnetLink) {
+        const qrElement = tooltip.querySelector('#magnet-qrcode');
+        if (qrElement) {
+            qrElement.innerHTML = ''; // 清除之前的二维码
+            QRCode.toCanvas(magnetLink, { width: 128, margin: 1, errorCorrectionLevel: 'L' }, function (error, canvas) {
+                if (error) {
+                    console.error(error);
+                    qrElement.textContent = 'QR Code Error';
+                } else {
+                    canvas.style.width = "128px";
+                    canvas.style.height = "128px";
+                    qrElement.appendChild(canvas);
+                }
+            });
+        }
     }
 
     // 显示悬浮框的核心逻辑
@@ -314,6 +332,8 @@
             
             // 新增：为截图添加点击放大事件
             addScreenshotClickEvents(cachedData.screenshots || []);
+            // 新增：生成二维码
+            generateQrCode(magnetLink);
             return;
         }
 
@@ -333,6 +353,8 @@
                 
                 // 新增：为截图添加点击放大事件
                 addScreenshotClickEvents(data.screenshots || []);
+                // 新增：生成二维码
+                generateQrCode(magnetLink);
             }
             updateTooltipPosition(event);
         });
